@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: openshift-ipi-install 
+spec:
+  params:
+  - name: operation
+    type: string
+  - name: image
+    type: string
+  steps:
+  - command:
+    - openshift-install
+    - version
+    image: $(params.operation)
+    name: display-version
+    resources: {}
+  - image: $(params.operation)
+    name: copy-files
+    resources: {}
+    script: cp $(workspaces.config.path)/* $(workspaces.persistent.path)
+  - command:
+    - ls
+    - $(workspaces.persistent.path)
+    image: $(params.operation)
+    name: list-contents
+    resources: {}
+  - command:
+    - cat
+    - $(workspaces.persistent.path)/install-config.yaml
+    image: $(params.operation)
+    name: cat-file
+    resources: {}
+  - image: $(params.operation)
+    name: sleep
+    resources: {}
+    script: |
+      #!/usr/bin/env bash
+      echo "I am supposed to sleep for 5 seconds!"
+      sleep 5
+  - command:
+    - openshift-install
+    - $(params.operation)
+    - cluster
+    - --dir=$(workspaces.persistent.path)
+    env:
+    - name: OS_CLIENT_CONFIG_FILE
+      valueFrom:
+        secretKeyRef:
+          key: clouds.yaml
+          name: clouds-yaml
+    image: $(params.operation)
+    name: installer-run
+    resources: {}
+  workspaces:
+  - name: persistent
+  - name: config
+  - mountPath: /etc/openstack
+    name: auth
