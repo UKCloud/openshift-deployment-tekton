@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: openshift-ipi-deployment
+spec:
+  params:
+  - default: create
+    description: Type of operation to perform, use create for cluster creation or delete for cluster deletion.
+    name: cluster-operation
+    type: string
+  - name: installer-image
+    description: Image containing openshift-install binary
+    type: string
+  tasks:
+  - name: install-openshift 
+    params:
+    - name: operation
+      value: $(params.cluster-operation)
+    - name: image
+      value: $(params.installer-image)
+    taskRef:
+      kind: Task
+      name: openshift-ipi-install
+    workspaces:
+    - name: persistent
+      workspace: persistent-data
+    - name: config
+      workspace: config-map
+    - name: auth
+      workspace: secret
+  workspaces:
+  - name: persistent-data
+  - name: config-map
+  - name: secret
