@@ -5,9 +5,13 @@ OpenShift deployment code based on Tekton.
 Initial pipeline to deploy OpenShift cluster using IPI approach, requires container image with openshift-installer in the $PATH
 
 Also requires:
+
 configmap with the install-config.yaml required (passed as config workspace)
+
 secret with clouds.yaml (passed as workspace secret)
+
 persistent volume claim to enable deletion of cluster at later date (passed as persistent-data workspace)
+
 
 To run the pipeline and create a cluster use the following command:
 
