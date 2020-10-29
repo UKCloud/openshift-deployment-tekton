@@ -12,7 +12,7 @@ spec:
     description: Image containing openshift-install binary
     type: string
   tasks:
-  - name: openshift-ipi-install 
+  - name: install-openshift 
     params:
     - name: operation
       value: $(params.cluster-operation)
@@ -20,7 +20,7 @@ spec:
       value: $(params.installer-image)
     taskRef:
       kind: Task
-      name: prepare-openshift-installer
+      name: openshift-ipi-install
     workspaces:
     - name: persistent
       workspace: persistent-data
