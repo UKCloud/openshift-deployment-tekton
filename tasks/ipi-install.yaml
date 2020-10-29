@@ -12,26 +12,26 @@ spec:
   - command:
     - openshift-install
     - version
-    image: $(params.operation)
+    image: $(params.image)
     name: display-version
     resources: {}
-  - image: $(params.operation)
+  - image: $(params.image)
     name: copy-files
     resources: {}
     script: cp $(workspaces.config.path)/* $(workspaces.persistent.path)
   - command:
     - ls
     - $(workspaces.persistent.path)
-    image: $(params.operation)
+    image: $(params.image)
     name: list-contents
     resources: {}
   - command:
     - cat
     - $(workspaces.persistent.path)/install-config.yaml
-    image: $(params.operation)
+    image: $(params.image)
     name: cat-file
     resources: {}
-  - image: $(params.operation)
+  - image: $(params.image)
     name: sleep
     resources: {}
     script: |
@@ -49,7 +49,7 @@ spec:
         secretKeyRef:
           key: clouds.yaml
           name: clouds-yaml
-    image: $(params.operation)
+    image: $(params.image)
     name: installer-run
     resources: {}
   workspaces:
