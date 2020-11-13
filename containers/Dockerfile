@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM ubi-minimal:latest
 
 RUN microdnf install wget tar gzip ; microdnf clean all
 WORKDIR /tmp
