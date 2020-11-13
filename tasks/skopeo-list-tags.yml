@@ -1,0 +1,52 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: skopeo-list-tags
+spec:
+  params:
+  - name: IMAGE
+    type: string
+    description: "Container image to check for existance, and available tags"
+  - name: TAG
+    type: string
+    description: "Tag to check for on the specified image."
+    default: ""
+  results:
+  # - name: repository
+  #   description: Name of the repository, if found, which the image tags refer to.
+  - name: tags
+    description: Tags applied to the specified container image.
+  - name: tag_found
+    description: Was an image found with the specified tag.
+  steps:
+  - image: registry.redhat.io/rhel8/skopeo@sha256:81c640ecc22a49d6c3c8959aca8b92eba12777e87f2a5abc2a1ea9a91222845f
+    name: skopeo-list-tags
+    script: |
+      # echo -n '["latest"]' > $(results.tags.path)
+      skopeo list-tags docker://$(params.IMAGE) > $(results.tags.path) || echo 'Skopeo failed to list tags for the repo specified'
+      # skopeo list-tags docker://$(params.IMAGE) |jq '.Repository' > $(results.repository.path) || echo 'Skopeo failed to list tags for the repo specified'
+  - name: get-version-from-params
+    image: registry.redhat.io/rhel8/python-38
+    script: |
+      #!/usr/bin/env python3
+      import json
+
+      print(f"Checking for $(params.TAG)")
+
+      with open("$(results.tags.path)", "r") as skopeo_json:
+        data = json.load(skopeo_json)
+        print(f"Read output of {data}")
+
+      print(f"Got Tags of {data['Tags']}")
+      print("$(params.TAG)")
+      print(len("$(params.TAG)"))
+      print("$(params.TAG)" in data['Tags'])
+
+      with open("$(results.tag_found.path)", "w+") as f:
+        if len("$(params.TAG)") > 0 and "$(params.TAG)" in data['Tags']:
+          found = "true"
+        else:
+          found = "false"
+        print(f"tag_found: {found}")
+        f.writelines(found)

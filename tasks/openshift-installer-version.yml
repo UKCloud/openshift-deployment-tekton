@@ -48,7 +48,7 @@ spec:
       with urllib.request.urlopen(f"https://{BASE_URL}{CHANNEL_URL}{RELEASE_FILE}") as f:
         response = f.read().decode('utf-8')
 
-      version_regex = r'Version:\s*(?P<installer_version>\d\.\d\.\d)'
+      version_regex = r'Version:\s*(?P<installer_version>\d+\.\d+\.\d+)'
       p = re.compile(version_regex)
       if p.search(response):
         version = p.search(response).group('installer_version')
