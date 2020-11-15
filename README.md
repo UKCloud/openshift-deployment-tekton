@@ -25,7 +25,7 @@ Additional variable are available to control the tags used on the input and outp
 To use the template the following is an example that will work with the OpenShift CLI:
 
 ```
-oc process -f bctemplate.yaml -p BUILDCONFIG_NAME=test-buildconfig \
+oc process -f  buildconfig_imagestream_templates.yaml -p BUILDCONFIG_NAME=test-buildconfig \
 	-p OUTPUT_IMAGESTREAM_NAME=output_imagestream_name \
 	-p BASE_IMAGESTREAM_NAME=input_imagestream_name \
 	-p GIT_SOURCE=https://github.com/UKCloud/openshift-deployment-tekton.git \
