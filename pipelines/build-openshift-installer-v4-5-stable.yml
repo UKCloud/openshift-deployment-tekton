@@ -1,0 +1,82 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-openshift-installer-build-v4-5-stable
+spec:
+  description: |-
+    Tekton Pipeline which builds a container image used to install OpenShift v4.5.
+  params:
+  - name: installerImage
+    description: |-
+      Name and path for the OpenShift installer image.
+    default: "quay.apps.8013-f5bd51.cor00005-2.cna.ukcloud.com/openshift/openshift-installer"
+  - name: installerChannel
+    description: "Release channel for the installer. Should be one of: stable, latest, fast, candidate."
+    default: "stable"
+  - name: installerVersion
+    description: "OpenShift major.minor version to build the installer for. eg, '4.5'"
+    default: "4.5"
+  - name: buildConfigNamespace
+    description: Namespace in which the installer BuildConfig is.
+    default: "stevemul-testing"
+  - name: installerBuildConfig
+    description: Name of the BuildConfig to trigger.
+    default: "openshift-installer-2"
+  tasks:
+    - name: get-installer-version
+      taskRef:
+        name: openshift-installer-version
+      params:
+      - name: CHANNEL
+        value: "$(params.installerChannel)"
+      - name: VERSION
+        value: "$(params.installerVersion)"
+
+    - name: check-for-existing-image
+      taskRef:
+        name: skopeo-list-tags
+      runAfter:
+      - get-installer-version
+      params:
+      - name: IMAGE
+        value: "$(params.installerImage)"
+      - name: TAG
+        value: "$(tasks.get-installer-version.results.latest-installer-version)"
+
+    - name: build-installer
+      taskRef:
+        name: openshift-client-v0-16-3
+        kind: ClusterTask
+      when:
+      - input: "$(tasks.check-for-existing-image.results.tag_found)"
+        operator: in
+        values: ["False", "false"]
+      runAfter:
+      - check-for-existing-image
+      params:
+      - name: ARGS
+        value: ["start-build", "$(params.installerBuildConfig)", "--env=release=$(params.installerChannel)-$(params.installerVersion)", "-n=$(params.buildConfigNamespace)",  "-w"]
+
+    - name: test-openshift-installer
+      taskRef:
+        name: test-openshift-installer
+      runAfter:
+      - build-installer
+      params:
+      - name: image
+        value: "image-registry.openshift-image-registry.svc:5000/$(params.buildConfigNamespace)/$(params.installerBuildConfig):latest"
+
+    - name: push-to-quay
+      taskRef:
+        name: skopeo-copy-image
+      runAfter:
+      - test-openshift-installer
+      params:
+      - name: srcImageURL
+        value: "docker://image-registry.openshift-image-registry.svc:5000/$(params.buildConfigNamespace)/$(params.installerBuildConfig):latest"
+      - name: destImageURL
+        value: "docker://quay.apps.8013-f5bd51.cor00005-2.cna.ukcloud.com/openshift/openshift-installer:$(tasks.test-openshift-installer.results.version)"
+      - name: srcTLSverify
+        value: "false"
+      - name: destTLSverify
+        value: "false"

@@ -1,0 +1,67 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: openshift-installer-build-v0-1-0
+spec:
+  description: |-
+    Tekton Pipeline which builds a container image used to install OpenShift.
+  params:
+  - name: installerRepo
+    description: "Git repository to clone containing the installer Dockerfile to build."
+  - name: installerDockerfile
+    description: "Path to the Dockerfile to build the installer from."
+  - name: installerImage
+    description: |-
+      Name and path for the OpenShift installer image.
+      eg. image-registry.openshift-image-registry.svc:5000/openshift-deployment-tekton/openshift-installer
+  workspaces:
+  - name: git-src
+    description: The git repo
+  tasks:
+    - name: clone-source-repository
+      taskRef:
+        name: git-clone-v0-14-3
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: git-src
+      params:
+        - name: url
+          value: "$(params.installerRepo)"
+        - name: revision
+          value: prod_1.12b
+        - name: submodules
+          value: "false"
+        - name: deleteExisting
+          value: "true"
+    - name: ls-workspace-src
+      taskRef:
+        name: source-lister
+      workspaces:
+        - name: source
+          workspace: git-src
+      runAfter:
+        - clone-source-repository
+      params:
+        - name: contextDir
+          value: ""
+        - name: lsArgs
+          value: "-alhR"
+    - name: build-and-publish-container-image
+      taskRef:
+        name: buildah-v0-14-3
+        kind: ClusterTask
+      runAfter:
+        - ls-workspace-src
+      workspaces:
+        - name: source
+          workspace: git-src
+      params:
+        - name: DOCKERFILE
+          value: "$(params.installerDockerfile)"
+        - name: IMAGE
+          value: $(params.installerImage)
+        - name: FORMAT
+          value: "docker"
+        - name: TLSVERIFY
+          value: "false"

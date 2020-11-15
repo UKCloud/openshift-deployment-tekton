@@ -1,0 +1,72 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: openshift-installer-version
+spec:
+  params:
+  - name: CHANNEL
+    type: string
+    description: "Release channel to get the latest version for. Options are stable, fast, latest, candidate. Default is stable."
+    default: "stable"
+  - name: VERSION
+    type: string
+    description: "stable"
+    default: "4.5"
+  results:
+  - name: latest-installer-version
+    description: Latest full version number for the specified release channel and major.minor version.
+  - name: latest-installer-download-url
+    description: URL to download the corresponding openshift installer version from.
+  - name: latest-installer-filename
+    description: Filename for the latest corresponding openshift installer version.
+  steps:
+  - name: get-version-from-params
+    image: registry.redhat.io/rhel8/python-38
+    script: |
+      #!/usr/bin/env python3
+      import http.client
+      import re
+      import urllib.request
+
+      BASE_URL = "mirror.openshift.com"
+      OCP_URL = "/pub/openshift-v4/clients/ocp"
+      CHANNEL_URL = f"{OCP_URL}/$(params.CHANNEL)-$(params.VERSION)"
+      RELEASE_FILE = "/release.txt"
+      RELEASE_URL = f"{CHANNEL_URL}/{RELEASE_FILE}"
+
+      print(f"Get latest installer for version '$(params.VERSION)' for channel '$(params.CHANNEL)' from {BASE_URL}{CHANNEL_URL}")
+
+      conn = http.client.HTTPSConnection(BASE_URL)
+      conn.request("HEAD", f"{CHANNEL_URL}{RELEASE_FILE}")
+      res = conn.getresponse()
+      print(res.status, res.reason)
+      if res.status != 200:
+        print(f"Error response {res.status} received when making HEAD request to url 'https://{BASE_URL}{CHANNEL_URL}{RELEASE_FILE}'")
+        exit(1)
+
+      with urllib.request.urlopen(f"https://{BASE_URL}{CHANNEL_URL}{RELEASE_FILE}") as f:
+        response = f.read().decode('utf-8')
+
+      version_regex = r'Version:\s*(?P<installer_version>\d+\.\d+\.\d+)'
+      p = re.compile(version_regex)
+      if p.search(response):
+        version = p.search(response).group('installer_version')
+        print(f"Found version of {version}")
+      else:
+        print(f"No matches found for regex '{version_regex}' in 'https://{BASE_URL}{CHANNEL_URL}{RELEASE_FILE}'")
+        exit(1)
+
+      with open("$(results.latest-installer-version.path)", "w+") as f:
+        print(f"latest-installer-version: {version}")
+        f.writelines(version)
+
+      INSTALLER_FILE = f"openshift-install-linux-{version}.tar.gz"
+      with open("$(results.latest-installer-filename.path)", "w+") as f:
+        print(f"latest-installer-filename: {INSTALLER_FILE}")
+        f.writelines(INSTALLER_FILE)
+
+      DOWNLOAD_URL = f"https://{BASE_URL}{CHANNEL_URL}/{INSTALLER_FILE}"
+      with open("$(results.latest-installer-download-url.path)", "w+") as f:
+        print(f"latest-installer-download-url: {DOWNLOAD_URL}")
+        f.writelines(DOWNLOAD_URL)
