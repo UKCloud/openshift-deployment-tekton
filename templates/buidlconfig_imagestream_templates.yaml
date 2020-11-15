@@ -1,0 +1,77 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: openshift-installer
+message: Test objects setup...
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: ${OUTPUT_IMAGESTREAM_NAME}
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: ${BASE_IMAGESTREAM_NAME}
+  spec:
+    tags:
+      - name: latest
+        from:
+          kind: DockerImage
+          name: ${SOURCE_IMAGE_FOR_BASE}
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: ${BUILDCONFIG_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${OUTPUT_IMAGESTREAM_NAME}:${OUTPUT_IMAGESTREAM_TAG}
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${GIT_BRANCH}
+        uri: ${GIT_SOURCE}
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: ${BASE_IMAGESTREAM_NAME}:${BASE_IMAGESTREAM_TAG}
+      type: Docker
+parameters:
+- description: The OpenShift Namespace where the objects reside.
+  displayName: Namespace
+  name: NAMESPACE
+  value: openshift
+- name: BUILDCONFIG_NAME
+  description: The name to give the buildconfig itself
+  displayName: BuildConfig Name
+- name: OUTPUT_IMAGESTREAM_NAME
+  description: The name for the resultant ImageStream
+  displayName: Output ImageStream Name
+- name: OUTPUT_IMAGESTREAM_TAG
+  description: The tag to give the image in the output ImageStream
+  displayName: Output ImageStream Tag (default latest)
+  value: latest
+- name: BASE_IMAGESTREAM_NAME
+  description: The name of the ImageStream that will contain the base image
+  displayName: Base ImageStream Name
+- name: BASE_IMAGESTREAM_TAG
+  description: The tag used from the base ImageStream (default latest)
+  displayName: Base ImageStream Tag
+  value: latest
+- name: SOURCE_IMAGE_FOR_BASE
+  description: The source image and its repository that the BASE_IMAGESTREAM will use (default RHEL8 UBI minimal)
+  displayName: Source docker image
+  value: registry.access.redhat.com/ubi8/ubi-minimal
+- name: GIT_SOURCE
+  description: Source Git repository to get the Dockerfile from
+  displayName: Git repository source
+  value: https://github.com/UKCloud/openshift-deployment-tekton.git
+- name: GIT_BRANCH 
+  description: Branch of Git repo to work from
+  displayName: Git branch
+- name: CONTEXT_DIR
+  description: Folder within Git repo to find the Dockerfile
+  displayName: Context Directory
