@@ -4,6 +4,26 @@ OpenShift deployment code based on Tekton.
 
 DISCLAIMER: This is just the inital setup, and as such is very basic at the moment.
 
+## BuildConfigs and ImageStreams
+
+### buildconfig_imagestream_templates.yaml
+
+A generic template designed to allow the creation of a BuildConfig and two ImageStreams, one for the base container for the build and one for the output. 
+
+BUILDCONFIG_NAME - the name to give the BuildConfig
+OUTPUT_IMAGESTREAM_NAME - the name to give the ImageStream that will contain your output image
+BASE_IMAGESTREAM_NAME - the base image to use with your Dockerfile
+GIT_SOURCE - the GIT repo you'll pull the Dockerfile from
+GIT_BRANCH - the branch of the repo to use
+CONTEXT_DIR - the directory containing your Dockerfile in the Git repo
+SOURCE_IMAGE_FOR_BASE - the url to access the source image you wish to use as your base (this defaults to the Red Hat RHEL8 UBI minimal image)
+
+Additional variable are available to control the tags used on the input and output ImageStreams. Look in the template file for details, these currently default to latest.
+
+To use the template the following is an example that will work with the OpenShift CLI:
+
+`oc process -f bctemplate.yaml -p BUILDCONFIG_NAME=test-buildconfig -p OUTPUT_IMAGESTREAM_NAME=output_imagestream_name -p BASE_IMAGESTREAM_NAME=input_imagestream_name -p GIT_SOURCE=https://github.com/UKCloud/openshift-deployment-tekton.git -p GIT_BRANCH=main -p CONTEXT_DIR=containers | oc create -f -`
+
 ## Pipelines
 
 ### openshift-ipi-deployment
