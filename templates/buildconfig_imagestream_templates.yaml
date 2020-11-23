@@ -40,10 +40,6 @@ objects:
           name: ${BASE_IMAGESTREAM_NAME}:${BASE_IMAGESTREAM_TAG}
       type: Docker
 parameters:
-- description: The OpenShift Namespace where the objects reside.
-  displayName: Namespace
-  name: NAMESPACE
-  value: openshift
 - name: BUILDCONFIG_NAME
   description: The name to give the buildconfig itself
   displayName: BuildConfig Name
