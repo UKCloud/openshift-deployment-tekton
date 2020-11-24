@@ -20,9 +20,6 @@ GIT_SOURCE - the GIT repo you'll pull the Dockerfile from
 GIT_BRANCH - the branch of the repo to use
 CONTEXT_DIR - the directory containing your Dockerfile in the Git repo
 SOURCE_IMAGE_FOR_BASE - the url to access the source image you wish to use as your base (this defaults to the Red Hat RHEL8 UBI minimal image)
-
-
-
 ```
 
 Additional variable are available to control the tags used on the input and output ImageStreams. Look in the template file for details, these currently default to latest.
