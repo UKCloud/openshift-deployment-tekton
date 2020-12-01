@@ -1,0 +1,54 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: openshift-upi-build
+spec:
+  description: |-
+    Tekton Pipeline which builds a container image used to provision OpenStack infrastucture and install OpenShift
+  params:
+  - name: upiRepo
+    description: Git repository to clone containing the openshift-upi Ansible playbooks
+  - name: upiRevision
+    description: Git repository revision to check out
+    default: "main"
+  - name: registryDestination
+    description: |-
+      Name and path to push the openshift-upi image.
+      eg. image-registry.openshift-image-registry.svc:5000/openshift-deployment-tekton/ansible-runner
+  workspaces:
+  - name: git-src
+    description: "Workspace for Git UPI repo"
+  tasks:
+    - name: clone-source-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: git-src
+      params:
+        - name: url
+          value: "$(params.upiRepo)"
+        - name: revision
+          value: $(params.upiRevision)
+        - name: submodules
+          value: "false"
+        - name: deleteExisting
+          value: "true"
+    - name: build-and-publish-container-image
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      runAfter:
+        - clone-source-repository
+      workspaces:
+        - name: source
+          workspace: git-src
+      params:
+        - name: IMAGE
+          value: $(params.registryDestination)
+        - name: FORMAT
+          value: "docker"
+        - name: TLSVERIFY
+          value: "false"
