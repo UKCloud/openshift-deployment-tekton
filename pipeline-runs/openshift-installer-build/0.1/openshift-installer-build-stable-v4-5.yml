@@ -1,0 +1,22 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: openshift-installer-build-stable-v4-5
+spec:
+  pipelineRef:
+    name: openshift-installer-build-v0-1-0
+  params:
+    - name: INSTALLER_CHANNEL
+      value: "stable"
+    - name: INSTALLER_VERSION
+      value: "4.5"
+  workspaces:
+  - name: git-src
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Mi

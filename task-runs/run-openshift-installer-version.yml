@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: run-openshift-installer-version
+spec:
+  taskRef:
+    name: openshift-installer-version
+  params:
+    - name: CHANNEL
+      value: latest
+    - name: VERSION
+      value: "4.6"
