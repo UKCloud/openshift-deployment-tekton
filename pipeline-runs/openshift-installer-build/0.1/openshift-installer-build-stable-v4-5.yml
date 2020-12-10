@@ -5,7 +5,7 @@ metadata:
   name: openshift-installer-build-stable-v4-5
 spec:
   pipelineRef:
-    name: openshift-installer-build-v0-1-0
+    name: openshift-installer-build-v0-1
   params:
     - name: INSTALLER_CHANNEL
       value: "stable"
@@ -19,4 +19,4 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 20Mi
+            storage: 1GiB
