@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: openshift-installer-version
+  name: openshift-installer-version-v0-1
 spec:
   params:
   - name: CHANNEL

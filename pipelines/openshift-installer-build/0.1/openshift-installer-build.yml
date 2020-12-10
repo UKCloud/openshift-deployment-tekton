@@ -16,20 +16,20 @@ spec:
         Name and path for the OpenShift installer image.
       default: "quay.cor00005-2.cna.ukcloud.com"
     - name: INSTALLER_CHANNEL
-      description: "Release channel for the installer. Should be one of: stable, latest, fast, candidate."
+      description: "Release channel for the installer. Valid options are: stable, latest, fast, candidate."
       default: "stable"
     - name: INSTALLER_VERSION
       description: "OpenShift major.minor version to build the installer for. eg, '4.5'"
       default: "4.5"
     - name: BUILD_CONFIG_NAMESPACE
-      description: Namespace in which the installer BuildConfig is.
+      description: Namespace for the installer BuildConfig. The namespace must already exist.
     - name: INSTALLER_BUILD_CONFIG
-      description: Name of the BuildConfig to trigger.
+      description: Name of the BuildConfig to trigger. The BuildConfig must already exist.
 
   tasks:
     - name: get-installer-version
       taskRef:
-        name: openshift-installer-version
+        name: openshift-installer-version-v0-1
       params:
       - name: CHANNEL
         value: "$(params.INSTALLER_CHANNEL)"
@@ -38,13 +38,12 @@ spec:
 
     - name: check-for-existing-image
       taskRef:
-        name: skopeo-list-tags
+        name: skopeo-list-tags-v0-1
       runAfter:
       - get-installer-version
       params:
       - name: IMAGE
-        value: "$(params.INSTALLER_IMAGE_REPO
-  )/openshift/$(params.INSTALLER_IMAGE_NAME)"
+        value: "$(params.INSTALLER_IMAGE_REPO)/openshift/$(params.INSTALLER_IMAGE_NAME)"
       - name: TAG
         value: "$(tasks.get-installer-version.results.latest-installer-version)"
 
@@ -64,7 +63,7 @@ spec:
 
     - name: test-openshift-installer
       taskRef:
-        name: test-openshift-installer
+        name: test-openshift-installer-v0-1
       runAfter:
       - build-installer
       params:
@@ -73,7 +72,7 @@ spec:
 
     - name: push-to-quay
       taskRef:
-        name: skopeo-copy-image
+        name: skopeo-copy-image-v0-1
       runAfter:
       - test-openshift-installer
       params:

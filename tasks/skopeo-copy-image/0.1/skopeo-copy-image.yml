@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: skopeo-copy-image
+  name: skopeo-copy-image-v0-1
 spec:
   description: |-
     Skopeo is a command line tool for working with remote image registries.
@@ -10,17 +10,17 @@ spec:
     If your production registry requires credentials to login in order to push the image, skopeo can handle that as well via secrets attached to the Service Account used to execute this Task.
     This Task is a copy of the ClusterTask skopeo-copy but without the need for a workspace.
   params:
-  - name: srcImageURL
+  - name: SRC_IMAGE_URL
     description: URL of the image to be copied to the destination registry
     type: string
-  - name: destImageURL
+  - name: DEST_IMAGE_URL
     description: URL of the image where the image from source should be copied to
     type: string
-  - name: srcTLSverify
+  - name: SRC_TLS_VERIFY
     description: Verify the TLS on the src registry endpoint
     type: string
     default: "true"
-  - name: destTLSverify
+  - name: DEST_TLS_VERIFY
     description: Verify the TLS on the dest registry endpoint
     type: string
     default: "true"
@@ -28,4 +28,4 @@ spec:
   - image: registry.redhat.io/rhel8/skopeo@sha256:81c640ecc22a49d6c3c8959aca8b92eba12777e87f2a5abc2a1ea9a91222845f
     name: skopeo-copy
     script: |
-      skopeo copy "$(params.srcImageURL)" "$(params.destImageURL)" --src-tls-verify=$(params.srcTLSverify) --dest-tls-verify=$(params.destTLSverify)
+      skopeo copy "$(params.SRC_IMAGE_URL)" "$(params.DEST_IMAGE_URL)" --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DEST_TLS_VERIFY)
