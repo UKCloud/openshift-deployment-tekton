@@ -1,19 +1,22 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: test-openshift-installer
+  name: test-openshift-installer-v0-1
 spec:
   params:
-  - name: image
+  - name: IMAGE
     type: string
   results:
-  - name: version
+  - name: VERSION
     description: Version of the OpenShift installer built into the image.
   steps:
   - name: check-installer-version
-    image: $(params.image)
+    image: $(params.IMAGE)
     script: |
       INSTALLED_VERSION=$(openshift-install version |grep openshift-install |awk '{print $2}')
+      if [ "$INSTALLED_VERSION" != "$(params.VERSION)" ]; then
+        exit 1
+      fi
       RELEASE_TXT_VERSION=$(grep Version: /tmp/release.txt | cut -d ' ' -f 5-)
       if [ "$INSTALLED_VERSION" != "$RELEASE_TXT_VERSION" ]; then
         exit 1

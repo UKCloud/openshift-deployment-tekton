@@ -6,4 +6,5 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 20Mi
+      # 1GiB is the smallest allocatable block volume size
+      storage: 1GiB

@@ -1,0 +1,64 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: openshift-ipi-install-v0-1
+spec:
+  params:
+  - name: IMAGE
+    description: |-
+      Container image to run all the tasks in. The image must have 'openshift-installer' on the $PATH.
+      eg. quay.cor00005-2.cna.ukcloud.com/openshift/openshift-installer
+    type: string
+  - name: OPERATION
+    description: Installation operation to run. Valid options are 'create' or 'destroy'.
+    type: string
+
+  steps:
+  - name: display-version
+    image: $(params.IMAGE)
+    command:
+    - openshift-install
+    - version
+
+  - name: copy-files
+    image: $(params.IMAGE)
+    script: cp $(workspaces.config.path)/* $(workspaces.persistent.path)
+
+  - name: list-contents
+    image: $(params.IMAGE)
+    command:
+    - ls
+    - $(workspaces.persistent.path)
+
+  - name: cat-file
+    image: $(params.IMAGE)
+    command:
+    - cat
+    - $(workspaces.persistent.path)/install-config.yaml
+
+  - name: sleep
+    image: $(params.IMAGE)
+    script: |
+      #!/usr/bin/env bash
+      echo "I am supposed to sleep for 5 seconds!"
+      sleep 5
+
+  - name: installer-run
+    image: $(params.IMAGE)
+    command:
+    - openshift-install
+    - $(params.OPERATION)
+    - cluster
+    - --dir=$(workspaces.persistent.path)
+    env:
+    - name: OS_CLIENT_CONFIG_FILE
+      valueFrom:
+        secretKeyRef:
+          key: clouds.yaml
+          name: clouds-yaml
+
+  workspaces:
+  - name: persistent
+  - name: config
+  - name: auth
+    mountPath: /etc/openstack
