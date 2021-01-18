@@ -76,12 +76,12 @@ spec:
       runAfter:
       - test-openshift-installer
       params:
-      - name: srcImageURL
+      - name: SRC_IMAGE_URL
         value: "docker://image-registry.openshift-image-registry.svc:5000/$(params.BUILD_CONFIG_NAMESPACE)/$(params.INSTALLER_IMAGE_NAME):latest"
-      - name: destImageURL
+      - name: DEST_IMAGE_URL
         value: "docker://$(params.INSTALLER_IMAGE_REPO
   )/openshift/$(params.INSTALLER_IMAGE_NAME):$(tasks.test-openshift-installer.results.version)"
-      - name: srcTLSverify
+      - name: SRC_TLS_VERIFY
         value: "false"
-      - name: destTLSverify
+      - name: DEST_TLS_VERIFY
         value: "false"
