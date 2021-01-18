@@ -79,8 +79,7 @@ spec:
       - name: SRC_IMAGE_URL
         value: "docker://image-registry.openshift-image-registry.svc:5000/$(params.BUILD_CONFIG_NAMESPACE)/$(params.INSTALLER_IMAGE_NAME):latest"
       - name: DEST_IMAGE_URL
-        value: "docker://$(params.INSTALLER_IMAGE_REPO
-  )/openshift/$(params.INSTALLER_IMAGE_NAME):$(tasks.test-openshift-installer.results.version)"
+        value: "docker://$(params.INSTALLER_IMAGE_REPO)/openshift/$(params.INSTALLER_IMAGE_NAME):$(tasks.test-openshift-installer.results.version)"
       - name: SRC_TLS_VERIFY
         value: "false"
       - name: DEST_TLS_VERIFY
