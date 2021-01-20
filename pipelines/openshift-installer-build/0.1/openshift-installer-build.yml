@@ -67,9 +67,10 @@ spec:
       runAfter:
       - build-installer
       params:
-      - name: image
+      - name: IMAGE
         value: "image-registry.openshift-image-registry.svc:5000/$(params.BUILD_CONFIG_NAMESPACE)/$(params.INSTALLER_IMAGE_NAME):latest"
-
+      - name: VERSION
+        value: $(tasks.get-installer-version.results.latest-installer-version)
     - name: push-to-quay
       taskRef:
         name: skopeo-copy-image-v0-1
@@ -79,7 +80,7 @@ spec:
       - name: SRC_IMAGE_URL
         value: "docker://image-registry.openshift-image-registry.svc:5000/$(params.BUILD_CONFIG_NAMESPACE)/$(params.INSTALLER_IMAGE_NAME):latest"
       - name: DEST_IMAGE_URL
-        value: "docker://$(params.INSTALLER_IMAGE_REPO)/openshift/$(params.INSTALLER_IMAGE_NAME):$(tasks.test-openshift-installer.results.version)"
+        value: "docker://$(params.INSTALLER_IMAGE_REPO)/openshift/$(params.INSTALLER_IMAGE_NAME):$(tasks.get-installer-version.results.latest-installer-version)"
       - name: SRC_TLS_VERIFY
         value: "false"
       - name: DEST_TLS_VERIFY
