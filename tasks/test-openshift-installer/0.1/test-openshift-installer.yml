@@ -22,9 +22,6 @@ spec:
     description: |-
       Version number of the OpenShift installer to assert is the version built into the image.
       The version number is generally in the format eg. '4.5.24'
-  results:
-  - name: VERSION
-    description: Version of the OpenShift installer built into the image.
   steps:
   - name: check-installer-version
     image: $(params.IMAGE)
@@ -37,5 +34,4 @@ spec:
       if [ "$INSTALLED_VERSION" != "$RELEASE_TXT_VERSION" ]; then
         exit 1
       fi
-      echo -n $INSTALLED_VERSION > $(results.version.path)
       exit 0
