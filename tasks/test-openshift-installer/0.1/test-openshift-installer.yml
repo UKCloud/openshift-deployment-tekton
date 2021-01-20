@@ -3,9 +3,25 @@ kind: Task
 metadata:
   name: test-openshift-installer-v0-1
 spec:
+  description: |-
+    Task to run some basic tests on an image expected to contain the openshift-install binary.
+    Current tests include:
+    Check the version output by 'openshift-install version' matches the version number parameter.
+    Check the version output by 'openshift-install version' matches the version number in the local release.txt file.
   params:
   - name: IMAGE
     type: string
+    description: |-
+      Container image to run this stage.
+      Examples of valid values include:
+        image-registry.openshift-image-registry.svc:5000/installer-pipeline/openshift-installer:latest
+        default-route-openshift-image-registry.apps.8033-9589d4.cor00005-2.cna.ukcloud.com/deployment-tekton/openshift-installer:4.5.24
+      Note the service account used to execute this task must have a secret with appropriate permissions to pull the specified image.
+  - name: VERSION
+    type: string
+    description: |-
+      Version number of the OpenShift installer to assert is the version built into the image.
+      The version number is generally in the format eg. '4.5.24'
   results:
   - name: VERSION
     description: Version of the OpenShift installer built into the image.
