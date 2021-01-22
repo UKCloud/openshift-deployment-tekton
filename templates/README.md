@@ -26,5 +26,5 @@ oc process -f  buildconfig_imagestream_templates.yaml -p BUILDCONFIG_NAME=test-b
  -p BASE_IMAGESTREAM_NAME=input_imagestream_name \
  -p GIT_SOURCE=https://github.com/UKCloud/openshift-deployment-tekton.git \
  -p GIT_BRANCH=main \
- -p CONTEXT_DIR=containers | oc create -f -
+ -p CONTEXT_DIR=containers/openshift-installer | oc create -f -
 ```
