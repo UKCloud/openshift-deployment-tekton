@@ -1,0 +1,60 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: openshift-ipi-deployment-v0-2
+spec:
+  params:
+  - default: create
+    description: Type of operation to perform, use 'create' for cluster creation or 'delete' for cluster deletion.
+    name: CLUSTER_OPERATION
+    type: string
+  - description: |-
+      Image containing openshift-install binary
+      eg. quay.io/openshift/openshift-installer
+    name: INSTALLER_IMAGE
+    type: string
+
+  tasks:
+  - name: install-openshift
+    params:
+    - name: OPERATION
+      value: $(params.CLUSTER_OPERATION)
+    - name: IMAGE
+      value: $(params.INSTALLER_IMAGE)
+    taskRef:
+      kind: Task
+      name: openshift-ipi-install-v0-2
+    workspaces:
+    - name: persistent
+      workspace: persistent-data
+    - name: config
+      workspace: config-map
+    - name: auth
+      workspace: secret
+  - name: wait-for-api
+    params:
+    - name: SCRIPT
+      value: while ! curl https://api.openshift-demo.cor00005-2.cna.ukcloud.uk:6443
+        -s --insecure >/dev/null; do echo "waiting for api"; sleep 60; done
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client-v0-16-3
+  - name: configure-registry
+    runAfter:
+    - wait-for-api
+    taskRef:
+      kind: Task
+      name: openshift-ipi-registry-configure-v0-1
+    when:
+    - Input: $(params.CLUSTER_OPERATION)
+      Operator: in
+      Values:
+      - create
+    workspaces:
+    - name: persistent
+      workspace: persistent-data
+
+  workspaces:
+  - name: persistent-data
+  - name: config-map
+  - name: secret

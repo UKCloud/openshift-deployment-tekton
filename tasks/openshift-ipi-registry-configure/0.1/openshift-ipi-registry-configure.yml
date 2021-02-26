@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: openshift-ipi-registry-configure-v0-1
+spec:
+  description: |-
+    Task to configure the OpenShift registry to make the initial IPI deployment complete successfully.
+  params:
+  - name: IMAGE
+    type: string
+    default: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+    description: |-
+      Container image to run this stage.
+      Examples of valid values include:
+        image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      Note the service account used to execute this task must have a secret with appropriate permissions to pull the specified image.
+  steps:
+  - name: wait-for-operator
+    image: $(params.IMAGE)
+    script: |
+      export KUBECONFIG=$(workspaces.persistent.path)/auth/kubeconfig
+      while ! oc get storageclasses.storage.k8s.io standard >/dev/null; do echo "waiting for cluster operator storageclass progress"; sleep 60; done     
+  - name: create-storage-class
+    image: $(params.IMAGE)
+    script: |
+      export KUBECONFIG=$(workspaces.persistent.path)/auth/kubeconfig
+      echo '{"allowVolumeExpansion": true,"apiVersion": "storage.k8s.io/v1","kind": "StorageClass","metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"},"name": "tier2"},"parameters": {"availability": "nova","type": "TIER2"},"provisioner": "kubernetes.io/cinder","reclaimPolicy": "Delete","volumeBindingMode": "Immediate"}' | oc create -f - 
+  - name: change-default-storage-class
+    image: $(params.IMAGE)
+    script: |
+      export KUBECONFIG=$(workspaces.persistent.path)/auth/kubeconfig
+      oc annotate sc standard storageclass.kubernetes.io/is-default-class="false" --overwrite
+  - name: patch-cloud-provider-for-ignore-volume-az
+    image: $(params.IMAGE)
+    script: |
+      export KUBECONFIG=$(workspaces.persistent.path)/auth/kubeconfig
+      oc patch cm cloud-provider-config --type merge --patch '{"data": {"config": "[Global]\nsecret-name = openstack-credentials\nsecret-namespace = kube-system\n[BlockStorage]\nignore-volume-az = yes\n"}}' -n openshift-config
+  - name: setup-registry-storage
+    image: $(params.IMAGE)
+    script: |
+      ls 
+      export KUBECONFIG=$(workspaces.persistent.path)/auth/kubeconfig
+      while ! oc get configs.imageregistry.operator.openshift.io cluster >/dev/null; do echo "waiting for cluster operator image registry progress"; sleep 60; done
+      oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+      oc patch configs.imageregistry.operator.openshift.io cluster --type json -p'[{"op": "remove", "path": "/spec/storage/pvc" }]'
+
+  workspaces:
+  - name: persistent
